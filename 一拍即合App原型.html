@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>一拍即合（ShutterMatch）App 原型</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='26' fill='%23B0540E'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='%23F8F5F0' stroke-width='6'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%23F8F5F0'/%3E%3C/svg%3E">
+<style>
+:root{
+  --ink:#241D16; --paper:#F7F3EE; --card:#FFFFFF; --accent:#B0540E;
+  --accent-2:#8C430C; --tint:#F4E7D5; --muted:#8A7E71; --line:#E7E0D5;
+  --ok:#2F7D4F; --bad:#B03A2E; --shadow:0 6px 20px rgba(36,29,22,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+  background:#1d1a17; color:var(--ink); min-height:100vh;
+  display:flex; flex-direction:column; align-items:center; padding:22px 16px 40px;
+}
+.ribbon{color:#B9AE9F; font-size:12px; letter-spacing:.12em; margin-bottom:14px; text-align:center}
+.ribbon b{color:#E8D9C2; font-weight:600}
+.toggle{display:inline-flex; background:#000; border:1px solid #3a322a; border-radius:20px; overflow:hidden; margin-bottom:16px}
+.toggle button{background:transparent; color:#8f857a; border:0; padding:12px 20px; font-size:13px; cursor:pointer; transition:.2s; min-height:44px}
+.toggle button.on{background:var(--accent); color:#fff}
+
+/* 手机框架 */
+.phone{
+  width:392px; max-width:96vw; background:var(--paper); border-radius:34px; overflow:hidden;
+  box-shadow:0 22px 60px rgba(0,0,0,.45); position:relative; border:6px solid #000;
+}
+.statusbar{display:flex; justify-content:space-between; align-items:center; padding:12px 22px 8px; color:var(--ink); font-size:12px; font-weight:600; background:var(--paper)}
+.screen{min-height:640px; height:680px; overflow:hidden; position:relative}
+.view{position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; background:var(--paper); display:none; padding-bottom:80px}
+.view.active{display:block}
+::-webkit-scrollbar{width:0;height:0}
+
+/* 通用组件 */
+.topbar{position:sticky; top:0; z-index:5; background:rgba(247,243,238,.92); backdrop-filter:blur(8px); padding:8px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--line)}
+.topbar .tt{font-size:16px; font-weight:700}
+.topbar .back{font-size:15px; background:var(--card); border:1px solid var(--line); width:32px;height:32px;border-radius:10px; display:flex;align-items:center;justify-content:center; cursor:pointer; color:var(--ink)}
+.topbar .sub{font-size:12px; color:var(--muted); font-weight:400; margin-left:auto}
+
+/* 底部导航 */
+.tabbar{position:absolute; left:0; right:0; bottom:0; height:64px; background:#fff; border-top:1px solid var(--line); display:flex; z-index:8}
+.tab{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:11px; color:var(--muted); cursor:pointer; border:0; background:none}
+.tab .ic{width:22px;height:22px}
+.tab.on{color:var(--accent); font-weight:600}
+.tab.on .ic{color:var(--accent)}
+
+.btn{display:block; width:100%; border:0; border-radius:14px; padding:15px; font-size:15px; font-weight:600; cursor:pointer; text-align:center}
+.btn.primary{background:var(--accent); color:#fff}
+.btn.ghost{background:var(--card); border:1px solid var(--line); color:var(--ink)}
+.btn.ghost.on{border-color:var(--accent); color:var(--accent); background:var(--tint)}
+.btn:active{opacity:.85}
+
+.card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; margin:0 16px 12px}
+.tag{display:inline-block; font-size:11px; padding:3px 9px; border-radius:20px; background:var(--tint); color:var(--accent-2); font-weight:600}
+.tag.green{background:#E7F2EA; color:var(--ok)}
+.tag.gray{background:#EFEAE3; color:var(--muted)}
+.muted{color:var(--muted)}
+.price{color:var(--accent); font-weight:700}
+.sec-title{font-size:15px; font-weight:700; margin:16px 16px 10px; display:flex; align-items:center; gap:6px}
+.sec-title .more{margin-left:auto; font-size:12px; color:var(--muted); font-weight:400}
+.hairline{height:1px; background:var(--line); margin:10px 0}
+
+/* 首页 */
+.hero{position:relative; height:190px; overflow:hidden}
+.hero img{width:100%; height:100%; object-fit:cover; object-position:center}
+.hero .shade{position:absolute; inset:0; background:linear-gradient(180deg,rgba(20,15,10,.1),rgba(20,15,10,.72))}
+.hero .htext{position:absolute; left:18px; right:18px; bottom:16px; color:#fff}
+.hero .htext .h1{font-size:22px; font-weight:800; letter-spacing:.02em}
+.hero .htext .h2{font-size:13px; opacity:.9; margin-top:4px}
+.quick{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 16px 0}
+.quick .q{background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 6px; text-align:center; cursor:pointer; font-size:12px}
+.quick .q .qic{width:34px;height:34px; margin:0 auto 6px; border-radius:10px; display:flex;align-items:center;justify-content:center; background:var(--tint); color:var(--accent-2); font-size:17px}
+
+/* 作品瀑布 */
+.works{display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 16px}
+.witem{background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer}
+.witem img{width:100%; height:200px; object-fit:cover; display:block}
+.witem .wi{ padding:9px 10px; font-size:12px}
+.witem .wi .p{font-size:14px; font-weight:700; margin-top:3px}
+.witem .wi .m{color:var(--muted); font-size:11px}
+
+/* 摄影师卡片 */
+.phcard{display:flex; gap:12px; align-items:center; background:#fff; border:1px solid var(--line); border-radius:16px; padding:12px; margin:0 16px 10px; cursor:pointer}
+.phcard .av{width:52px;height:52px;border-radius:50%;object-fit:cover; flex-shrink:0}
+.phcard .inf{flex:1; min-width:0}
+.phcard .nm{font-weight:700; font-size:14px; display:flex; align-items:center; gap:6px}
+.phcard .nm .cert{color:var(--ok); font-size:12px}
+.phcard .dt{font-size:12px; color:var(--muted); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.phcard .rt{font-size:12px; color:var(--accent-2); font-weight:600}
+
+/* 筛选 */
+.chips{display:flex; gap:8px; padding:12px 16px; overflow-x:auto; white-space:nowrap}
+.chip{font-size:12px; padding:7px 14px; border-radius:20px; background:#fff; border:1px solid var(--line); cursor:pointer; color:var(--ink)}
+.chip.on{background:var(--accent); color:#fff; border-color:var(--accent)}
+
+/* 摄影师详情 */
+.phhead{background:#fff; padding:16px}
+.phhead .row{display:flex; gap:14px; align-items:center}
+.phhead .av{width:68px;height:68px;border-radius:50%;object-fit:cover}
+.phhead .nm{font-size:19px; font-weight:800; display:flex; align-items:center; gap:6px}
+.phhead .stat{display:flex; gap:16px; margin-top:10px}
+.phhead .stat .s{font-size:12px; color:var(--muted); text-align:center}
+.phhead .stat .s b{display:block; color:var(--ink); font-size:16px}
+.story{font-size:13px; color:#5f5549; line-height:1.7}
+.pkg{border:1px solid var(--line); border-radius:14px; padding:13px; margin-bottom:9px; background:#fff; cursor:pointer; display:flex; align-items:center}
+.pkg .pa{flex:1}
+.pkg .pa .pn{font-weight:700; font-size:14px}
+.pkg .pa .pd{font-size:12px; color:var(--muted); margin-top:3px}
+.rating{color:var(--accent-2); font-weight:700}
+
+/* 下单 */
+.field{background:#fff; border:1px solid var(--line); border-radius:14px; padding:13px; margin:0 16px 12px}
+.field .fl{font-size:12px; color:var(--muted); margin-bottom:6px}
+.field .fv{font-size:15px; font-weight:600}
+.row2{display:flex; gap:12px}
+.row2 .field{flex:1; margin:0}
+.daychip{display:inline-block; padding:6px 12px; border:1px solid var(--line); border-radius:10px; margin:0 6px 6px 0; font-size:12px; cursor:pointer; background:#fff}
+.daychip.on{border-color:var(--accent); color:var(--accent); background:var(--tint)}
+
+/* 订单 */
+.otabs{display:flex; padding:12px 16px 0; gap:4px; position:sticky; top:0; background:var(--paper); z-index:4}
+.otab{font-size:13px; padding:8px 2px; flex:1; text-align:center; color:var(--muted); border-bottom:2px solid transparent; cursor:pointer}
+.otab.on{color:var(--accent); font-weight:700; border-color:var(--accent)}
+.ocard{display:flex; gap:12px; background:#fff; border:1px solid var(--line); border-radius:16px; padding:12px; margin:0 16px 10px; align-items:center}
+.ocard img{width:60px;height:60px;border-radius:12px;object-fit:cover}
+.ocard .oi{flex:1; min-width:0}
+.ocard .on{font-weight:700; font-size:14px}
+.ocard .os{font-size:12px; color:var(--muted); margin-top:3px}
+.ocard .ob{font-size:12px; margin-top:6px; color:var(--accent-2); font-weight:600}
+
+/* IM */
+.chat{background:var(--paper); padding:14px 14px 10px; display:flex; flex-direction:column; gap:12px; min-height:430px}
+.bub{max-width:76%; padding:11px 14px; border-radius:16px; font-size:14px; line-height:1.5}
+.bub.them{background:#fff; border:1px solid var(--line); align-self:flex-start; border-bottom-left-radius:4px}
+.bub.me{background:var(--accent); color:#fff; align-self:flex-end; border-bottom-right-radius:4px}
+.chatinput{display:flex; gap:8px; padding:12px; background:#fff; border-top:1px solid var(--line); align-items:center; position:sticky; bottom:0}
+.chatinput input{flex:1; border:1px solid var(--line); border-radius:20px; padding:10px 14px; font-size:14px; outline:none}
+
+/* 我的 */
+.mecard{display:flex; gap:14px; align-items:center; background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; margin:0 16px 12px}
+.mecard .av{width:60px;height:60px;border-radius:50%;object-fit:cover}
+.mecard .nm{font-weight:800; font-size:17px}
+.mecard .tg{font-size:12px; color:var(--muted); margin-top:3px}
+.mrow{display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; margin:0 16px 10px; cursor:pointer}
+.mrow .mic{width:34px;height:34px;border-radius:10px;background:var(--tint); color:var(--accent-2); display:flex;align-items:center;justify-content:center; font-size:16px}
+.mrow .mn{flex:1; font-size:14px; font-weight:600}
+.mrow .ma{color:var(--muted); font-size:13px}
+
+/* 摄影师工作台 */
+.dash{display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 16px}
+.dash .db{background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px}
+.dash .db .dv{font-size:22px; font-weight:800}
+.dash .db .dl{font-size:12px; color:var(--muted); margin-top:3px}
+.verify{background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px; margin:0 16px 12px; display:flex; align-items:center; gap:12px}
+.verify .vc{width:40px;height:40px;border-radius:50%;background:var(--tint);color:var(--accent-2);display:flex;align-items:center;justify-content:center;font-size:18px}
+
+/* 表格类明细 */
+.rowline{display:flex; justify-content:space-between; padding:7px 0; font-size:13px}
+.rowline .k{color:var(--muted)}
+.bar{height:6px; border-radius:6px; background:var(--line); overflow:hidden; margin:5px 0}
+.bar i{display:block; height:100%; background:var(--accent)}
+
+.toast{position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(36,29,22,.92); color:#fff; padding:13px 20px; border-radius:12px; font-size:14px; z-index:50; opacity:0; transition:.25s; pointer-events:none; max-width:80%; text-align:center}
+.toast.show{opacity:1}
+
+@media (max-width:460px){
+  body{padding:8px 0 0; background:var(--paper)}
+  .ribbon,.toggle{display:none}
+  .phone{width:100vw; max-width:100vw; border-radius:0; border:0; box-shadow:none}
+  .screen{height:calc(100vh - 34px)}
+}
+</style>
+</head>
+<body>
+<div class="ribbon">拍 一 即 合 · ShutterMatch — <b>摄影师接单赚钱 × 用户找摄影师</b></div>
+<div class="toggle" id="roleToggle">
+  <button data-role="user" class="on" onclick="setRole('user')">用户端 · 找摄影师</button>
+  <button data-role="ph" onclick="setRole('ph')">摄影师端 · 接单赚钱</button>
+</div>
+
+<div class="phone">
+  <div class="statusbar"><span>9:41</span><span class="sig">5G · 100%</span></div>
+  <div class="screen" id="screen"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- 素材清单：供发布链路静态扫描并打包 （运行时由 JS 以同一相对路径动态引用） -->
+<div style="display:none" aria-hidden="true">
+<img src="portrait1.jpg" alt=""><img src="portrait2.jpg" alt=""><img src="portrait3.jpg" alt=""><img src="portrait4.jpg" alt=""><img src="travel1.jpg" alt=""><img src="travel2.jpg" alt=""><img src="travel3.jpg" alt="">
+</div>
+
+<script>
+// ===== 演示数据 =====
+const W = {p1:"portrait1.jpg",p2:"portrait2.jpg",p3:"portrait3.jpg",p4:"portrait4.jpg",t1:"travel1.jpg",t2:"travel2.jpg",t3:"travel3.jpg"};
+const WORK_FEED = [
+  {img:W.p1, t:"胶片质感写真", p:299, ph:"林一 · 认证"},
+  {img:W.t1, t:"山野旅拍 · 泸沽湖", p:499, ph:"阿凯 · 旅拍"},
+  {img:W.p3, t:"新中式写真", p:399, ph:"林一 · 认证"},
+  {img:W.t2, t:"洱海树 · 意境旅拍", p:520, ph:"阿凯 · 旅拍"},
+  {img:W.p4, t:"暖光情绪人像", p:349, ph:"陈默 · 认证"},
+  {img:W.p2, t:"花园下午茶写真", p:329, ph:"小鹿 · 认证"},
+];
+const PHOTOGRAPHERS = [
+  {n:"林一", tag:"认证摄影师", city:"上海", star:"4.9", n1:1280, works:286, style:"人像 / 写真 / 胶片", s:"6年全职，擅长情绪人像与胶片质感写真，多次获得平台优质创作者。"},
+  {n:"阿凯", tag:"旅拍摄影师", city:"大理 · 丽江", star:"4.8", n1:980, works:312, style:"旅拍 / 风光 / 情侣", s:"常驻云南，专注旅行跟拍与情侣旅拍，边走边拍，出片快。"},
+  {n:"陈默", tag:"认证摄影师", city:"北京", star:"4.9", n1:1560, works:401, style:"婚礼 / 活动 / 纪实", s:"婚礼跟拍 8 年，纪实风格，善捕捉自然瞬间。"},
+  {n:"小鹿", tag:"认证摄影师", city:"杭州", star:"4.7", n1:760, works:198, style:"闺蜜照 / 探店 / 日常", s:"元气向摄影师，擅长闺蜜照、探店与日常记录。"},
+];
+const ORDERS = {
+  all:[{img:W.p1,n:"林一 · 胶片写真",s:"待接单 · 已托管 ¥299",st:"待接单",b:"查看订单"},
+       {img:W.t2,n:"阿凯 · 洱海旅拍",s:"待服务 · 已托管 ¥520",st:"待服务",b:"联系摄影师"},
+       {img:W.p3,n:"林一 · 新中式写真",s:"已完成 · 已结算",st:"已完成",b:"去评价"}],
+  pending:[{img:W.p1,n:"林一 · 胶片写真",s:"待接单 · 已托管 ¥299",st:"待接单",b:"查看订单"}],
+  serving:[{img:W.t2,n:"阿凯 · 洱海旅拍",s:"待服务 · 已托管 ¥520",st:"待服务",b:"联系摄影师"}],
+  done:[{img:W.p3,n:"林一 · 新中式写真",s:"已完成 · 已结算",st:"已完成",b:"去评价"}]
+};
+
+// ===== 路由 =====
+let role = "user";
+
+function toast(msg){const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1600);}
+function tab(h,on,label){return `<button class="tab${on?' on':''}" onclick="go('${h}')"><span class="ic">${svg(h)}</span><span>${label}</span></button>`}
+
+const ICONPATHS={
+  home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h4v-6h6v6h4V9.5"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  orders:'<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9M9 14h6"/>',
+  message:'<path d="M4 5h16v11H8l-4 4V5z"/><path d="M8 9h8M8 12h5"/>',
+  me:'<circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4.5-6 8-6s7 2 8 6"/>',
+  im:'<path d="M4 5h16v11H8l-4 4V5z"/><path d="M8 9h8M8 12h5"/>',
+  phome:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  pworks:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m3 16 5-4 4 3 3-3 6 5"/>',
+  pincome:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9l3-2 3 2"/>',
+  pdash:'<path d="M4 4h7v9H4zM13 4h7v5h-7zM13 11h7v9h-7zM4 15h7v5H4z"/>',
+  work:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  income:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9l3-2 3 2"/>',
+  album:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m3 16 5-4 4 3 3-3 6 5"/>',
+  dash:'<path d="M4 4h7v9H4zM13 4h7v5h-7zM13 11h7v9h-7zM4 15h7v5H4z"/>',
+  wallet:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 12h5v4h-5a2 2 0 0 1 0-4z"/>',
+  back:'<path d="M15 5 8 12l7 7"/>',
+  cam:'<circle cx="12" cy="13" r="4"/><path d="M4 7h4l2-3h4l2 3h4a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>',
+  star:'<path d="M12 3l2.7 5.6 6.3.9-4.5 4.4 1 6.1L12 17.8 6.5 20l1-6.1L3 9.5l6.3-.9z"/>'
+};
+function svg(n){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">${ICONPATHS[n]||ICONPATHS.cam}</svg>`}
+function stars(v){let s='';for(let i=0;i<5;i++)s+=`<span style="color:${i<Math.round(v)?'var(--accent-2)':'#d8d0c4'}">★</span>`;return s}
+
+// ===== 视图渲染 =====
+function view_Login(){
+  return `<div class="login" style="padding:0 26px; display:flex; flex-direction:column; justify-content:center; height:100%">
+    <div style="font-size:40px;color:var(--accent);margin-bottom:8px">${svg('cam')}</div>
+    <h1 style="font-size:28px;font-weight:800">一拍即合</h1>
+    <p style="color:var(--muted);margin:8px 0 30px">让每个会拍照的人都能接单赚钱，<br>让每个想被好好记录的人都能放心约拍。</p>
+    <button class="btn primary" onclick="role='user';go('home')" style="margin-bottom:12px">我是需求方 · 找摄影师拍照</button>
+    <button class="btn ghost" onclick="role='ph';go('phome')">我是摄影师 · 入驻接单赚钱</button>
+    <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:26px">手机号验证码注册登录 · 微信授权</p>
+  </div>`;
+}
+
+function view_Home(){
+  const quick=[['写真','写'],['旅拍','旅'],['跟拍','跟'],['宠物','宠'],['婚礼','婚'],['探店','探'],['宝宝','宝'],['全部','∨']];
+  const qq=quick.map(q=>`<div class="q" onclick="toast('已筛选：${q[0]}')"><div class="qic">${q[1]}</div>${q[0]}</div>`).join('');
+  const works=WORK_FEED.map((w,i)=>`<div class="witem" onclick="go('ph',${i%PHOTOGRAPHERS.length})"><img src="${w.img}" alt=""><div class="wi"><span>${w.t}</span><div class="p">¥${w.p}<span style="color:var(--muted);font-weight:400;font-size:11px;margin-left:4px">${w.ph}</span></div></div></div>`).join('');
+  const phs=PHOTOGRAPHERS.slice(0,3).map((p,i)=>phCard(p,i)).join('');
+  return `${topBar('','<span class="tt">一拍即合</span>','上海 · 城市定位')}
+  <div class="hero"><img src="${W.t1}"><div class="shade"></div><div class="htext"><div class="h1">把当下的美好，好好拍下来</div><div class="h2">认证摄影师 · 平台资金托管 · 不满意退款</div></div></div>
+  <div class="quick">${qq}</div>
+  <div class="sec-title">今日推荐作品 <span class="more">更多 ›</span></div>
+  <div class="works">${works}</div>
+  <div class="sec-title">推荐摄影师 <span class="more">换一批</span></div>
+  ${phs}`;
+}
+
+function phCard(p,i){
+  return `<div class="phcard" onclick="go('ph',${i})">
+    <img class="av" src="${W.p1}" alt="">
+    <div class="inf"><div class="nm">${p.n} ${p.tag==='认证摄影师'?'<span class="cert">●认证</span>':''}</div>
+    <div class="dt">${p.city} · ${p.style}</div></div>
+    <div class="rt">${p.star} 分 · ${p.n1} 单</div></div>`;
+}
+
+function view_Search(){
+  const chips=['上海','大理','北京','杭州','写真','旅拍','婚礼','¥100-300','¥300-600','4.5分+','认证'];
+  const ch=chips.map((c,i)=>`<span class="chip ${i<2?'on':''}" onclick="this.classList.toggle('on');toast('筛选更新')">${c}</span>`).join('');
+  const phs=PHOTOGRAPHERS.map((p,i)=>phCard(p,i)).join('');
+  return `${topBar('home','<span class="tt">找摄影师</span>','按城市 · 类型 · 价格筛选')}
+  <div style="padding:12px 16px 2px"><div style="display:flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:24px;padding:11px 16px"><span style="color:var(--muted)">${svg('search')}</span><input placeholder="搜索摄影师、作品或拍摄类型" style="border:0;outline:none;flex:1;font-size:14px;background:none"></div></div>
+  <div class="chips">${ch}</div>
+  <div class="sec-title">共 ${PHOTOGRAPHERS.length} 位摄影师 <span class="more">${PHOTOGRAPHERS.length*120} 件作品</span></div>
+  ${phs}`;
+}
+
+function view_Ph(i){
+  const p=PHOTOGRAPHERS[i%PHOTOGRAPHERS.length];
+  const works=`<div class="works" style="grid-template-columns:1fr 1fr 1fr;padding:0 16px">${[W.p1,W.p3,W.p4].map(w=>`<div class="witem"><img src="${w}" style="height:110px"></div>`).join('')}</div>`;
+  const pkgs=`<div class="pkg" onclick="go('pkg',${i})"><div class="pa"><div class="pn">单人写真套餐</div><div class="pd">约 2 小时 · 精修 9 张 · 送底片</div></div><div class="price">¥299</div><span style="color:var(--muted);margin-left:8px">›</span></div>
+  <div class="pkg" onclick="go('pkg',${i})"><div class="pa"><div class="pn">情侣/闺蜜双人套餐</div><div class="pd">约 3 小时 · 精修 15 张 · 送底片</div></div><div class="price">¥499</div><span style="color:var(--muted);margin-left:8px">›</span></div>`;
+  return `${topBar('',`<span class="tt" style="flex:1">${p.n}</span>`, `作品 ${p.works} · 服务`)}
+  <div class="phhead"><div class="row"><img class="av" src="${W.p1}"><div><div class="nm">${p.n} <span class="tag green">${p.tag}</span></div><div style="color:var(--muted);font-size:13px;margin-top:4px">${p.city} · ${p.style}</div></div><div style="margin-left:auto;text-align:right"><div class="rating">${p.star} <span style="font-weight:600">分</span></div><div style="font-size:11px;color:var(--muted)">${p.n1} 单</div></div></div>
+    <div class="hairline"></div>
+    <div class="story">${p.s}</div>
+    <div class="stat"><div class="s"><b>${p.n1}</b>累计订单</div><div class="s"><b>${p.works}</b>作品</div><div class="s"><b>${p.star}</b>评分</div><div class="s"><b>98%</b>准时率</div></div></div>
+  <div class="sec-title">作品集</div>${works}
+  <div class="sec-title">服务套餐</div>${pkgs}
+  <div class="sec-title">用户评价 ${stars(p.star)} 4.9 <span class="more">${p.n1*0.4|0} 条</span></div>
+  <div class="card"><div style="display:flex;gap:10px;align-items:center"><div style="font-weight:700">林**</div><div style="color:var(--accent-2);font-size:13px">${stars(5)}</div></div><p style="font-size:13px;color:#5f5549;margin-top:6px">出片太棒了，情绪拿捏得很准，沟通也很顺畅，全程很放心，下次还约！</p></div>
+  <div style="position:sticky;bottom:0;background:var(--paper);padding:12px 16px;display:flex;gap:10px">
+    <button class="btn ghost" style="flex:1" onclick="toast('已收藏该摄影师')">收藏</button>
+    <button class="btn primary" style="flex:2" onclick="go('pkg',${i})">立即预约</button>
+  </div>`}
+function view_Pkg(i){
+  const p=PHOTOGRAPHERS[i%PHOTOGRAPHERS.length];
+  const days=['10/12 六','10/13 日','10/14 一','10/15 二','10/16 三'];
+  const times=['09:00','10:30','13:00','14:30','16:00'];
+  return `${topBar('',`<span class="tt">确认预约</span>`,`${p.n}`)}
+  <div style="padding:4px 16px 0"><div class="card" style="margin:0"><div style="font-weight:700;font-size:15px">单人写真套餐</div><div style="font-size:12px;color:var(--muted);margin-top:4px">约 2 小时 · 精修 9 张 · 送全部底片 · 任选场地</div><div class="price" style="font-size:20px;margin-top:6px">¥299</div></div></div>
+  <div class="sec-title">选择日期</div>
+  <div style="padding:0 16px">${days.map((d,j)=>`<span class="daychip ${j===0?'on':''}" onclick="pickDay(this)">${d}</span>`).join('')}</div>
+  <div class="sec-title">选择时段</div>
+  <div style="padding:0 16px">${times.map((t,j)=>`<span class="daychip ${j===2?'on':''}" onclick="pickDay(this)">${t}</span>`).join('')}</div>
+  <div class="sec-title">拍摄地点</div>
+  <div class="field"><div class="fl">地点</div><div class="fv">上海市 · 静安区 · 苏州河畔</div></div>
+  <div class="field"><div class="fl">备注（可选）</div><div class="fv" style="font-weight:400;color:var(--muted)">如：想拍胶片风，需要女生摄影师</div></div>
+  <div style="position:sticky;bottom:0;background:var(--paper);padding:12px 16px">
+    <div class="rowline"><span class="k">订单金额</span><span>¥299</span></div>
+    <div class="rowline"><span class="k">平台保障金（托管）</span><span class="tag green">已含</span></div>
+    <button class="btn primary" style="margin-top:10px" onclick="go('pay')">提交订单</button>
+  </div>`}
+function pickDay(el){el.parentElement.querySelectorAll('.daychip').forEach(x=>x.classList.remove('on'));el.classList.add('on')}
+
+function view_Pay(){
+  return `${topBar('',`<span class="tt">支付确认</span>`,'')}
+  <div style="padding:16px 16px 0;text-align:center"><div style="font-size:44px;color:var(--accent)">${svg('wallet')}</div><div style="color:var(--muted);font-size:13px;margin-top:6px">平台资金托管 · 服务完成后再结算给摄影师</div></div>
+  <div class="sec-title">订单信息</div>
+  <div class="card"><div class="rowline"><span class="k">服务</span><span>林一 · 单人写真套餐</span></div><div class="rowline"><span class="k">时间</span><span>10/12（周六）13:00</span></div><div class="rowline"><span class="k">地点</span><span>上海 · 苏州河畔</span></div><div class="hairline"></div><div class="rowline"><span class="k">应付金额</span><span class="price" style="font-size:18px">¥299</span></div></div>
+  <div class="card" style="background:var(--tint);border-color:#ecdcc4"><div style="font-weight:700;font-size:13px">保障说明</div><p style="font-size:12px;color:#6b5b46;margin-top:5px">款项由平台托管，摄影师爽约全额退、作品不满意可协商售后，验收后平台再结算，抽佣透明。</p></div>
+  <div style="padding:4px 16px 12px"><button class="btn primary" onclick="toast('支付成功 · 资金已托管');setTimeout(()=>go('orders'),600)">确认支付 ¥299</button></div>`;
+}
+
+function view_Orders(tabKey){
+  const tabs=[['all','全部'],['pending','待接单'],['serving','待服务'],['done','已完成']];
+  const ot=tabs.map(t=>`<div class="otab ${t[0]===tabKey?'on':''}" onclick="go('orders',t='${t[0]}')">${t[1]}</div>`).join('');
+  const list=(ORDERS[tabKey]||ORDERS.all).map(o=>`<div class="ocard"><img src="${o.img}"><div class="oi"><div class="on">${o.n}</div><div class="os">${o.s}</div><div class="ob">${o.b} ›</div></div><div class="tag ${o.st==='已完成'?'green':'gray'}">${o.st}</div></div>`).join('');
+  return `${topBar('','<span class="tt">订单</span>','')}
+  <div class="otabs">${ot}</div>
+  ${list||'<div style="text-align:center;color:var(--muted);padding:60px 0">暂无订单</div>'}`;
+}
+
+function view_Im(){
+  return `${topBar('',`<span class="tt">林一 · 摄影师</span>`, '在线')}
+  <div class="chat"><div class="bub them">你好，我是林一，很高兴为你服务～</div>
+  <div class="bub them">你的单人写真套餐 10/12 13:00 苏州河畔，对吗？</div>
+  <div class="bub me">对的对的，想拍胶片质感的，可以吗？</div>
+  <div class="bub them">没问题，我有胶片机，出片很有氛围感。</div>
+  <div class="bub them">到时候穿浅色系会更出片哦。</div>
+  <div class="bub me">好的！那时间就定 13:00，麻烦确认下～</div>
+  <div class="bub them">已确认，准时见。</div></div>
+  <div class="chatinput"><input placeholder="输入消息…"><button class="btn primary" style="width:64px;padding:9px 0" onclick="toast('消息已发送（演示）')">发送</button></div>`;
+}
+
+function view_Me(){
+  return `${topBar('','<span class="tt">我的</span>','')}
+  <div class="mecard"><img class="av" src="${W.p1}"><div><div class="nm">小拾 <span class="tag">需求方</span></div><div class="tg">ID 2088 · 上海 · 已实名</div></div><div style="margin-left:auto;color:var(--muted);font-size:12px">编辑 ›</div></div>
+  ${row('钱包','¥ 1,280 余额','wallet','me')}
+  ${row('我的收藏','128 件作品','album','')}
+  ${row('我的关注','36 位摄影师','star','')}
+  ${row('邀请有礼','邀请好友得 ¥20','message','')}
+  ${row('订单与售后','查看全部订单','orders','orders')}
+  ${row('设置','','me','')}`;
+}
+function row(n,d,ic,h){return `<div class="mrow" onclick="${h?`go('${h}')`:`toast('${n}')`}"><div class="mic">${svg(ic)}</div><div class="mn">${n}</div><div class="ma">${d} ›</div></div>`}
+
+function topBar(back,title,sub,noBack){
+  const b=back?`<div class="back" onclick="go('${back}')">‹</div>`:'';
+  return `<div class="topbar">${b}${title}<div class="sub">${sub||''}</div></div>`;
+}
+
+// ===== 摄影师端 =====
+function view_Phome(){
+  return `${topBar('',`<span class="tt">摄影师工作台</span>`,`林一 · 认证`)}
+  <div class="verify"><div class="vc">✓</div><div><div style="font-weight:700">认证摄影师</div><div style="font-size:12px;color:var(--muted)">已通过实名与资质审核 · 作品展示中</div></div><div style="margin-left:auto;color:var(--accent-2);font-size:12px">查看 ›</div></div>
+  <div class="dash"><div class="db"><div class="dv">3,240</div><div class="dl">今日曝光</div></div><div class="db"><div class="dv">86</div><div class="dl">今日咨询</div></div><div class="db"><div class="dv">12</div><div class="dl">今日下单</div></div><div class="db"><div class="dv">¥4,280</div><div class="dl">本月收入</div></div></div>
+  <div class="sec-title">待接单 <span class="more">2 笔需处理</span></div>
+  <div class="ocard"><img src="${W.p1}"><div class="oi"><div class="on">单人写真套餐</div><div class="os">10/12 13:00 · 苏州河畔 · 已托管 ¥299</div></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn ghost" style="padding:6px 12px;font-size:12px" onclick="toast('已接单，请按时履约')">接单</button><button class="btn ghost" style="padding:6px 12px;font-size:12px" onclick="toast('已拒单并自动退款')">拒单</button></div></div>
+  <div class="sec-title">快捷操作</div>
+  ${row('发布新作品','','cam','pworks')}
+  ${row('管理服务套餐','3 个在售','album','pworks')}
+  ${row('提现到银行卡','可提现 ¥6,800','income','pincome')}`;
+}
+
+function view_Pworks(){
+  const tabs='<div class="otabs"><div class="otab on">作品</div><div class="otab">套餐</div><div class="otab">排期</div></div>';
+  const ws=`<div class="works" style="grid-template-columns:1fr 1fr 1fr;padding:0 16px;margin-top:14px">${[W.p1,W.p3,W.p4,W.t2,W.p2,W.t1].map(w=>`<div class="witem"><img src="${w}" style="height:130px"><div class="wi"><div style="font-size:11px">胶片写真</div><div style="font-size:11px;color:var(--muted)">曝光 2.3k</div></div></div>`).join('')}</div>`;
+  return `${topBar('',`<span class="tt">作品与套餐</span>`,`+ 发布`)}
+  ${tabs}${ws}
+  <div style="padding:16px"><button class="btn ghost" onclick="toast('进入发布流程（演示）')">＋ 发布新作品</button></div>`;
+}
+
+function view_Pincome(){
+  return `${topBar('',`<span class="tt">收入中心</span>`,`本月`)}
+  <div class="card" style="text-align:center;padding:26px 14px"><div style="color:var(--muted);font-size:13px">本月收入</div><div class="price" style="font-size:34px">¥4,280</div><div style="font-size:12px;color:var(--muted);margin-top:6px">上月 ¥3,150 · 增长 36%</div><button class="btn primary" style="margin-top:18px" onclick="toast('提现申请已提交（演示）')">提现 ¥4,280</button></div>
+  <div class="sec-title">资金明细</div>
+  <div class="card">${[['10/08 单人写真','+¥269','已完成'],['10/07 情侣套餐','+¥449','已完成'],['10/05 旅拍跟拍','+¥468','已完成'],['10/03 探店跟拍','+¥269','已完成']].map(r=>`<div class="rowline"><span class="k">${r[0]}</span><span style="color:var(--ok);font-weight:700">${r[1]}</span></div>`).join('')}</div>`;
+}
+
+function view_Pdash(){
+  return `${topBar('',`<span class="tt">数据看板</span>`, `近 7 天`)}
+  <div class="dash"><div class="db"><div class="dv">18.6k</div><div class="dl">总曝光</div></div><div class="db"><div class="dv">6.2%</div><div class="dl">咨询转化</div></div><div class="db"><div class="dv">2.8%</div><div class="dl">下单转化</div></div><div class="db"><div class="dv">4.9</div><div class="dl">评价分</div></div></div>
+  <div class="sec-title">近 7 天曝光趋势</div>
+  <div class="card">${[['周一','2.1k'],['周二','2.5k'],['周三','2.2k'],['周四','3.0k'],['周五','3.4k'],['周六','3.6k'],['周日','1.8k']].map((r,j)=>`<div class="rowline" style="padding:3px 0"><span class="k" style="width:44px">${r[0]}</span><div class="bar" style="flex:1"><i style="width:${(parseInt(r[1])/36)*100}%"></i></div><span style="width:52px;text-align:right;font-size:12px;color:var(--muted)">${r[1]}</span></div>`).join('')}</div>
+  <div class="sec-title">作品表现 Top3</div>
+  <div class="card">${[['胶片写真','曝光 8.2k','92%'],['新中式写真','曝光 6.4k','78%'],['情绪人像','曝光 4.1k','65%']].map(r=>`<div class="rowline"><span>${r[0]}</span><span style="color:var(--muted)">${r[1]}</span><span style="color:var(--accent-2)">${r[2]}</span></div>`).join('')}</div>`;
+}
+
+// ===== 底部导航 =====
+function tabbar(r,active){
+  if(r==='user') return `<div class="tabbar">${tab('home',active==='home','首页')}${tab('search',active==='search','找摄影师')}${tab('orders',active==='orders','订单')}${tab('im',active==='im','消息')}${tab('me',active==='me','我的')}</div>`;
+  return `<div class="tabbar">${tab('phome',active==='phome','工作台')}${tab('pworks',active==='pworks','作品')}${tab('pincome',active==='pincome','收入')}${tab('pdash',active==='pdash','数据')}</div>`;
+}
+
+// ===== 路由 =====
+const ROUTES={
+  login:view_Login, home:view_Home, search:view_Search, ph:view_Ph, pkg:view_Pkg,
+  pay:view_Pay, orders:view_Orders, im:view_Im, me:view_Me,
+  phome:view_Phome, pworks:view_Pworks, pincome:view_Pincome, pdash:view_Pdash
+};
+let lastTab='all';
+function go(name,arg){
+  const screen=document.getElementById('screen');
+  if(name==='orders'&&typeof arg==='string'&&['all','pending','serving','done'].includes(arg)) lastTab=arg;
+  let html;
+  if(name==='orders') html=view_Orders(lastTab);
+  else html=ROUTES[name](arg);
+  let tb='';
+  if(name==='home'||name==='search'||name==='orders'||name==='me') tb=tabbar('user',name);
+  if(name==='phome'||name==='pworks'||name==='pincome'||name==='pdash') tb=tabbar('ph',name);
+  screen.innerHTML=`<div class="view active">${html}</div>${tb}`;
+}
+function setRole(r){
+  role=r;
+  document.querySelectorAll('#roleToggle button').forEach(b=>b.classList.toggle('on',b.dataset.role===r));
+  go(r==='user'?'home':'phome');
+}
+function boot(){
+  if(!location.hash || location.hash==='#'){ go('login'); return; }
+  const h=location.hash.slice(1); const [name,arg]=h.split('|');
+  go(name,arg||undefined);
+}
+window.addEventListener('hashchange',boot);
+window.addEventListener('DOMContentLoaded',boot);
+</script>
+</body>
+</html>
